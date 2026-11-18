@@ -1,0 +1,176 @@
+<!--
+Project: Indoor Navigation — Simple Graph Map Editor (UI)
+Ownership & responsibilities (comments only; no code changes):
+
+TEO QIYANG 22ACB06185 — Map Editing (Graph/Core)
+  • JS class: SimpleGraphEditor (nodes, connections, corner tools, grid snap, export/validation)
+  • Compass overlay UI hooks (N/angle handlers used by the class)
+
+CHONG WIN NIE 22ACB05895 — QR & Integration (Backend)
+  • JS methods called by UI buttons: generateQRCodes(), startBackend()
+  • Adapters that transform editor data → backend payload; QR preview/ZIP dialogs
+
+ONG XIANG QI 22ACB06240 — UI (this file)
+  • Page layout, header/toolbar/status bar, buttons, selects, canvas container
+  • Wires UI controls to editor.* methods; styling and accessibility of controls
+
+Note: This HTML only loads and wires the UI. All behavior lives in js/simple-graph-editor.js.
+Do not rename element IDs or button handlers; the JS depends on them.
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Graph Map Editor</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+        }
+        
+        .header {
+            background: #333;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .toolbar {
+            background: #e0e0e0;
+            padding: 10px 20px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .tool-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn:hover {
+            background: #0056b3;
+        }
+        
+        .editor-container {
+            padding: 20px;
+        }
+        
+        .canvas-container {
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            overflow: auto;
+            height: 70vh;
+            background: white;
+        }
+        
+        #mapCanvas {
+            display: block;
+            cursor: crosshair;
+        }
+        
+        .status-bar {
+            background: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: #6c757d;
+        }
+        
+        select {
+            padding: 4px 8px;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1>Simple Graph Map Editor</h1>
+                <span style="opacity: 0.8;">Graph-based navigation system like Python editor</span>
+            </div>
+            <div class="header-right">
+                <button onclick="editor.validateAndExport()" class="btn">Export JSON (V)</button>
+                <button onclick="editor.generateQRCodes()" class="btn">Generate QR (G)</button>
+                <button onclick="editor.startBackend()" class="btn" style="background: #28a745;">Start Backend</button>
+            </div>
+        </header>
+
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <div class="tool-group">
+                <button onclick="editor.toggleConnectionMode()" class="btn">Connect (C)</button>
+                <button onclick="editor.toggleDeletionMode()" class="btn">Delete (D)</button>
+                <button onclick="editor.toggleAddCornerMode()" class="btn">Add Corner (K)</button>
+                <button onclick="editor.toggleSnap()" class="btn">Grid Snap (S)</button>
+                <button onclick="editor.toggleCornerMode()" class="btn">L-Corner (M)</button>
+            </div>
+            <div class="tool-group">
+                <label>Labels: 
+                    <select onchange="editor.label_mode = this.value; editor.updateDisplay()">
+                        <option value="None">None</option>
+                        <option value="Name">Name</option>
+                        <option value="ID">ID</option>
+                        <option value="ID+Name">ID+Name</option>
+                        <option value="Hover" selected>Hover</option>
+                    </select>
+                </label>
+            </div>
+            <div class="tool-group">
+                <button onclick="editor.toggleCompassMode()" class="btn">Set Compass (N)</button>
+                <label>North Direction: 
+                    <select id="northDirection" onchange="editor.setNorthDirection(this.value)">
+                        <option value="0">↑ North (0°)</option>
+                        <option value="90">→ East (90°)</option>
+                        <option value="180">↓ South (180°)</option>
+                        <option value="270">← West (270°)</option>
+                        <option value="custom">Custom...</option>
+                    </select>
+                </label>
+                <input type="number" id="customAngle" placeholder="Custom angle (0-359°)" min="0" max="359" style="display:none; width: 120px;" onchange="editor.setCustomNorthDirection(this.value)">
+            </div>
+        </div>
+
+        <!-- Canvas Container -->
+        <main class="editor-container">
+            <div class="canvas-container">
+                <canvas id="mapCanvas"></canvas>
+            </div>
+        </main>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="status-left">
+                <span id="statusMessage">Click empty area to add room • C: Connect • D: Delete • K: Corner • S: Snap • M: L-Corner • N: Compass Mode</span>
+            </div>
+            <div class="status-right">
+                <span>Rooms (R001) & Corners (C001) like Python editor.py</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/simple-graph-editor.js"></script>
+</body>
+</html>

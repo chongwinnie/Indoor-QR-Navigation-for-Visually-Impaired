@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indoor Navigation - Real-Time Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #4a5568;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #718096;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 25px;
+        }
+
+        .map-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .users-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.4em;
+            color: #4a5568;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .user-card {
+            background: #f7fafc;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s ease;
+        }
+
+        .user-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .user-card.active {
+            border-left-color: #48bb78;
+            background: #f0fff4;
+        }
+
+        .user-card.inactive {
+            border-left-color: #ed8936;
+            background: #fffaf0;
+        }
+
+        .user-name {
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+
+        .user-location {
+            color: #718096;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+
+        .user-destination {
+            color: #4299e1;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        .user-status {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .status-active {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .status-inactive {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        .map-canvas {
+            width: 100%;
+            height: 500px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            background: #f8f9fa;
+        }
+
+        .connection-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            border-radius: 25px;
+            color: white;
+            font-weight: bold;
+            font-size: 0.9em;
+            z-index: 1000;
+        }
+
+        .connected {
+            background: #48bb78;
+        }
+
+        .disconnected {
+            background: #f56565;
+        }
+
+        .path-info {
+            background: #e6fffa;
+            border-left: 4px solid #38b2ac;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #718096;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>Indoor Navigation Dashboard</h1>
+            <p>Real-time user tracking and navigation monitoring</p>
+        </div>
+
+        <!-- Statistics -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="active-users">0</div>
+                <div class="stat-label">Active Users</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="total-sessions">0</div>
+                <div class="stat-label">Total Sessions</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="qr-scans">0</div>
+                <div class="stat-label">QR Scans</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="active-paths">0</div>
+                <div class="stat-label">Active Paths</div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Map Section -->
+            <div class="map-section">
+                <h2 class="section-title">Live Map View</h2>
+                <canvas id="map-canvas" class="map-canvas"></canvas>
+            </div>
+
+            <!-- Users Section -->
+            <div class="users-section">
+                <h2 class="section-title">Active Users</h2>
+                <div id="users-list">
+                    <div class="loading">Loading users...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Connection Status -->
+    <div id="connection-status" class="connection-status disconnected">
+        Connecting...
+    </div>
+
+    <script>
+        // Initialize Socket.IO
+        const socket = io();
+        let users = [];
+        let mapCanvas, mapCtx;
+
+        // Connection status
+        const statusEl = document.getElementById('connection-status');
+
+        socket.on('connect', () => {
+            console.log('Connected to server');
+            statusEl.textContent = 'Connected';
+            statusEl.className = 'connection-status connected';
+            socket.emit('join_dashboard');
+        });
+
+        socket.on('disconnect', () => {
+            console.log('Disconnected from server');
+            statusEl.textContent = 'Disconnected';
+            statusEl.className = 'connection-status disconnected';
+        });
+
+        // Initialize canvas
+        function initMap() {
+            mapCanvas = document.getElementById('map-canvas');
+            mapCtx = mapCanvas.getContext('2d');
+            
+            // Set canvas size
+            mapCanvas.width = mapCanvas.offsetWidth;
+            mapCanvas.height = mapCanvas.offsetHeight;
+            
+            drawMap();
+        }
+
+        // Draw map with users and paths
+        function drawMap() {
+            if (!mapCtx) return;
+            
+            // Clear canvas
+            mapCtx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
+            
+            // Draw background grid
+            mapCtx.strokeStyle = '#e2e8f0';
+            mapCtx.lineWidth = 1;
+            
+            for (let x = 0; x < mapCanvas.width; x += 20) {
+                mapCtx.beginPath();
+                mapCtx.moveTo(x, 0);
+                mapCtx.lineTo(x, mapCanvas.height);
+                mapCtx.stroke();
+            }
+            
+            for (let y = 0; y < mapCanvas.height; y += 20) {
+                mapCtx.beginPath();
+                mapCtx.moveTo(0, y);
+                mapCtx.lineTo(mapCanvas.width, y);
+                mapCtx.stroke();
+            }
+            
+            // Draw users and their paths
+            users.forEach((user, index) => {
+                if (user.current_location) {
+                    const color = `hsl(${index * 60}, 70%, 50%)`;
+                    drawUserLocation(user, color);
+                    
+                    if (user.path && user.path.length > 1) {
+                        drawUserPath(user, color);
+                    }
+                }
+            });
+        }
+
+        function drawUserLocation(user, color) {
+            // Simple position calculation (you'll need to map actual node positions)
+            const x = 50 + (users.indexOf(user) * 100) % (mapCanvas.width - 100);
+            const y = 50 + Math.floor(users.indexOf(user) / 5) * 100;
+            
+            // Draw user circle
+            mapCtx.fillStyle = color;
+            mapCtx.beginPath();
+            mapCtx.arc(x, y, 8, 0, 2 * Math.PI);
+            mapCtx.fill();
+            
+            // Draw user label
+            mapCtx.fillStyle = '#2d3748';
+            mapCtx.font = '12px Arial';
+            mapCtx.fillText(user.user_name, x + 15, y + 5);
+        }
+
+        function drawUserPath(user, color) {
+            // Draw path line (simplified)
+            mapCtx.strokeStyle = color;
+            mapCtx.lineWidth = 3;
+            mapCtx.setLineDash([5, 5]);
+            
+            // You'll need to implement actual node position mapping
+            mapCtx.beginPath();
+            // This is placeholder - implement with real node positions
+            mapCtx.stroke();
+            mapCtx.setLineDash([]);
+        }
+
+        // Update statistics
+        function updateStats() {
+            const activeUsers = users.filter(u => u.is_active).length;
+            const totalSessions = users.length;
+            const qrScans = users.reduce((sum, u) => sum + (u.qr_history?.length || 0), 0);
+            const activePaths = users.filter(u => u.path && u.path.length > 1).length;
+            
+            document.getElementById('active-users').textContent = activeUsers;
+            document.getElementById('total-sessions').textContent = totalSessions;
+            document.getElementById('qr-scans').textContent = qrScans;
+            document.getElementById('active-paths').textContent = activePaths;
+        }
+
+        // Update users list
+        function updateUsersList() {
+            const usersList = document.getElementById('users-list');
+            
+            if (users.length === 0) {
+                usersList.innerHTML = '<div class="loading">No active users</div>';
+                return;
+            }
+            
+            const usersHtml = users.map(user => {
+                const statusClass = user.is_active ? 'active' : 'inactive';
+                const statusText = user.is_active ? 'Active' : 'Inactive';
+                const lastSeen = new Date(user.last_seen).toLocaleTimeString();
+                
+                return `
+                    <div class="user-card ${statusClass}">
+                        <div class="user-name">
+                            ${user.user_name} 
+                            <span class="user-status status-${user.is_active ? 'active' : 'inactive'}">${statusText}</span>
+                        </div>
+                        <div class="user-location">
+                            Current: ${user.current_location || 'Unknown'}
+                        </div>
+                        <div class="user-destination">
+                            Destination: ${user.destination || 'Not set'}
+                        </div>
+                        <div style="font-size: 0.8em; color: #718096; margin-top: 5px;">
+                            Last seen: ${lastSeen}
+                        </div>
+                        ${user.path && user.path.length > 1 ? 
+                            `<div class="path-info">
+                                Path: ${user.path.join(' → ')} (${user.path.length - 1} steps)
+                            </div>` : ''
+                        }
+                    </div>
+                `;
+            }).join('');
+            
+            usersList.innerHTML = usersHtml;
+        }
+
+        // Socket event handlers
+        socket.on('users_update', (updatedUsers) => {
+            users = updatedUsers;
+            updateStats();
+            updateUsersList();
+            drawMap();
+        });
+
+        socket.on('user_update', (user) => {
+            const index = users.findIndex(u => u.session_id === user.session_id);
+            if (index >= 0) {
+                users[index] = user;
+            } else {
+                users.push(user);
+            }
+            updateStats();
+            updateUsersList();
+            drawMap();
+        });
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            initMap();
+            
+            // Handle window resize
+            window.addEventListener('resize', () => {
+                mapCanvas.width = mapCanvas.offsetWidth;
+                mapCanvas.height = mapCanvas.offsetHeight;
+                drawMap();
+            });
+        });
+
+        // Refresh data every 30 seconds
+        setInterval(() => {
+            if (socket.connected) {
+                socket.emit('join_dashboard');
+            }
+        }, 30000);
+    </script>
+</body>
+</html>
