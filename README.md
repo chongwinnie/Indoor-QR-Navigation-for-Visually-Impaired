@@ -4,7 +4,7 @@
 
 ### A QR code-based indoor navigation prototype with accessible guidance
 
-[▶️ Watch Project Demo](https://youtu.be/hXfcT_5vR5Y) · [🏗️ System Architecture](#️-overall-system-architecture) · [⚙️ Getting Started](#️-getting-started)
+[▶️ Watch Project Demo](https://youtu.be/x4xoDqppWYs) · [🏗️ System Architecture](#️-overall-system-architecture) · [⚙️ Getting Started](#️-getting-started)
 
 </div>
 
@@ -134,13 +134,47 @@ Open `map-editor/index.html` using a local development server (for example, VS C
 
 **Note:** The repository currently includes a development IP address in the Android client. This must be adapted to your own setup. These steps are based on the supplied code and report; a fresh installation has not been independently tested.
 
+---
+
 ## 🎬 Project Demonstration
+
+### 🧪 1. System Testing & Test Cases
+
+This video demonstrates the testing and evaluation of the Indoor QR Navigation System, including QR code detection, navigation functionality, and accessibility feedback.
 
 <div align="center">
 
-[![Watch the Indoor QR Navigation demo](https://img.youtube.com/vi/hXfcT_5vR5Y/hqdefault.jpg)](https://youtu.be/hXfcT_5vR5Y)
+<a href="https://youtu.be/hXfcT_5vR5Y">
+  <img src="https://img.youtube.com/vi/hXfcT_5vR5Y/hqdefault.jpg"
+       alt="Indoor QR Navigation System Testing and Test Cases"
+       width="600">
+</a>
 
-**[▶️ Watch the Full Project Demo on YouTube](https://youtu.be/hXfcT_5vR5Y)**
+<br>
+
+▶️ [Watch System Testing & Test Cases on YouTube](https://youtu.be/hXfcT_5vR5Y)
+
+</div>
+
+---
+
+### 📱 2. System Operation — User & Admin POV
+
+This video showcases the overall system operation from both the user and administrator perspectives, including the Android navigation application and the web-based map editor.
+
+<div align="center">
+
+<a href="https://youtu.be/x4xoDqppWYs">
+  <img src="https://img.youtube.com/vi/x4xoDqppWYs/hqdefault.jpg"
+       alt="Indoor QR Navigation System Operation - User and Admin POV"
+       width="600">
+</a>
+
+<br>
+
+▶️ [Watch System Operation (User & Admin POV) on YouTube](https://youtu.be/x4xoDqppWYs)
+
+</div>
 
 ---
 
